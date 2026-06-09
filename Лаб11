@@ -1,0 +1,212 @@
+#include <iostream>
+#include <string>
+#include <stdexcept>
+#include <vector>
+
+class Vehicle {
+protected:
+    std::string model;
+    int speed;
+    int maxSpeed;
+    
+public:
+    Vehicle(std::string m, int maxS) : model(m), speed(0), maxSpeed(maxS) {}
+    
+    virtual ~Vehicle() {}
+    
+    virtual void displayInfo() const {
+        std::cout << "Транспорт: " << model << ", макс. скорость: " << maxSpeed << " км/ч";
+    }
+    
+    virtual double getCargoCapacity() const {
+        return 0.0;
+    }
+    
+    std::string getModel() const { return model; }
+};
+
+class FreightVehicle : public Vehicle {
+private:
+    double cargoCapacity;
+    
+public:
+    FreightVehicle(std::string m, int maxS, double capacity) 
+        : Vehicle(m, maxS), cargoCapacity(capacity) {}
+    
+    void displayInfo() const override {
+        Vehicle::displayInfo();
+        std::cout << ", грузоподъемность: " << cargoCapacity << " тонн";
+    }
+    
+    double getCargoCapacity() const override {
+        return cargoCapacity;
+    }
+};
+
+class PassengerVehicle : public Vehicle {
+public:
+    PassengerVehicle(std::string m, int maxS) : Vehicle(m, maxS) {}
+    
+    void displayInfo() const override {
+        Vehicle::displayInfo();
+        std::cout << " (легковой)";
+    }
+    
+    double getCargoCapacity() const override {
+        return 0.0;
+    }
+};
+
+class LogisticsOrder {
+private:
+    int orderId;
+    double weight;
+    std::string description;
+    static int nextId;
+    
+public:
+    LogisticsOrder(double w, const std::string& desc = "") 
+        : weight(w), description(desc) {
+        if (weight < 0) {
+            throw std::invalid_argument("Вес заказа не может быть отрицательным");
+        }
+        orderId = nextId++;
+    }
+    
+    void assignVehicle(const Vehicle& vehicle) {
+        std::cout << "\nПопытка назначить заказ " << orderId << "\n";
+        std::cout << "Заказ: " << description << ", вес: " << weight << " тонн\n";
+        
+        if (weight < 0) {
+            throw std::invalid_argument("Вес заказа отрицательный");
+        }
+        
+        double capacity = vehicle.getCargoCapacity();
+        
+        std::cout << "Транспорт: ";
+        vehicle.displayInfo();
+        std::cout << std::endl;
+        
+        if (capacity <= 0) {
+            throw std::logic_error("Транспортное средство не предназначено для перевозки грузов");
+        }
+        
+        if (weight > capacity) {
+            throw std::overflow_error("Вес заказа " + std::to_string(weight) + 
+                                      " т превышает грузоподъемность " + std::to_string(capacity) + " т");
+        }
+        
+        std::cout << "Заказ " << orderId << " назначен на ";
+        vehicle.displayInfo();
+        std::cout << std::endl;
+    }
+    
+    double getWeight() const { return weight; }
+    int getOrderId() const { return orderId; }
+    
+    void displayOrder() const {
+        std::cout << "Заказ " << orderId << ": " << description 
+                  << ", вес: " << weight << " тонн";
+    }
+};
+
+int LogisticsOrder::nextId = 1000;
+
+int main() {
+    std::cout << "Система логистических заказов\n\n";
+    
+    FreightVehicle truck1("Volvo FH16", 140, 25.5);
+    FreightVehicle truck2("KamAZ-5490", 120, 20.0);
+    FreightVehicle truck3("Mercedes Actros", 130, 30.0);
+    PassengerVehicle car("Toyota Camry", 220);
+    
+    std::cout << "Доступный транспорт:\n";
+    truck1.displayInfo();
+    std::cout << std::endl;
+    truck2.displayInfo();
+    std::cout << std::endl;
+    truck3.displayInfo();
+    std::cout << std::endl;
+    car.displayInfo();
+    std::cout << "\n" << std::endl;
+    
+    std::cout << "Тест 1: Успешное назначение\n";
+    try {
+        LogisticsOrder order1(10.5, "Партия электроники");
+        order1.assignVehicle(truck1);
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка: " << e.what() << std::endl;
+    }
+    
+    std::cout << "\nТест 2: Превышение грузоподъемности\n";
+    try {
+        LogisticsOrder order2(28.0, "Строительные материалы");
+        order2.assignVehicle(truck2);
+    } catch (const std::overflow_error& e) {
+        std::cerr << "Ошибка: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка: " << e.what() << std::endl;
+    }
+    
+    std::cout << "\nТест 3: Отрицательный вес\n";
+    try {
+        LogisticsOrder order3(-5.0, "Отрицательный вес");
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Ошибка: " << e.what() << std::endl;
+    }
+    
+    std::cout << "\nТест 4: Назначение на легковой автомобиль\n";
+    try {
+        LogisticsOrder order4(5.0, "Мелкий груз");
+        order4.assignVehicle(car);
+    } catch (const std::logic_error& e) {
+        std::cerr << "Ошибка: " << e.what() << std::endl;
+    }
+    
+    std::cout << "\nТест 5: Несколько заказов\n";
+    
+    struct TestOrder {
+        double weight;
+        std::string description;
+        FreightVehicle* vehicle;
+    };
+    
+    TestOrder testOrders[] = {
+        {8.0, "Хрупкий груз", &truck1},
+        {22.0, "Тяжелое оборудование", &truck2},
+        {15.0, "Продукты питания", &truck1},
+        {35.0, "Промышленное сырье", &truck3},
+        {18.0, "Стройматериалы", &truck2}
+    };
+    
+    for (int i = 0; i < 5; i++) {
+        try {
+            LogisticsOrder order(testOrders[i].weight, testOrders[i].description);
+            order.assignVehicle(*testOrders[i].vehicle);
+        } catch (const std::overflow_error& e) {
+            std::cerr << "Заказ отклонен: " << e.what() << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "Ошибка: " << e.what() << std::endl;
+        }
+        std::cout << std::endl;
+    }
+    
+    std::cout << "\nТест 6: Вложенная обработка\n";
+    
+    try {
+        LogisticsOrder order6(40.0, "Сверхтяжелый груз");
+        
+        try {
+            order6.assignVehicle(truck3);
+        } catch (const std::overflow_error& e) {
+            std::cerr << "Внутренний catch: " << e.what() << std::endl;
+            throw;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Внешний catch: " << e.what() << std::endl;
+    }
+    
+    std::cout << "\nПрограмма завершена\n";
+    
+    return 0;
+}
