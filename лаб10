@@ -1,0 +1,289 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+class Vehicle {
+protected:
+    std::string model;
+    int speed;
+    int maxSpeed;
+    std::string licensePlate;
+    
+public:
+    Vehicle(std::string m, int maxS, std::string plate = "Не указан") 
+        : model(m), speed(0), maxSpeed(maxS), licensePlate(plate) {
+        std::cout << "Конструктор Vehicle: " << model << std::endl;
+    }
+    
+    virtual ~Vehicle() {
+        std::cout << "Деструктор Vehicle: " << model << std::endl;
+    }
+    
+    virtual void accelerate(int increment) {
+        speed += increment;
+        if (speed > maxSpeed) speed = maxSpeed;
+        std::cout << model << " разогнался до " << speed << " км/ч" << std::endl;
+    }
+    
+    virtual void brake(int decrement) {
+        speed -= decrement;
+        if (speed < 0) speed = 0;
+        std::cout << model << " замедлился до " << speed << " км/ч" << std::endl;
+    }
+    
+    virtual void displayInfo() const {
+        std::cout << "Модель: " << model << ", Скорость: " << speed 
+                  << "/" << maxSpeed << " км/ч, Номер: " << licensePlate;
+    }
+    
+    std::string getModel() const { return model; }
+    int getSpeed() const { return speed; }
+    int getMaxSpeed() const { return maxSpeed; }
+};
+
+class PublicTransport {
+protected:
+    int routeNumber;
+    int passengerCapacity;
+    int currentPassengers;
+    
+public:
+    PublicTransport(int route, int capacity) 
+        : routeNumber(route), passengerCapacity(capacity), currentPassengers(0) {
+        std::cout << "Конструктор PublicTransport: маршрут №" << routeNumber 
+                  << ", вместимость " << passengerCapacity << std::endl;
+    }
+    
+    virtual ~PublicTransport() {
+        std::cout << "Деструктор PublicTransport: маршрут №" << routeNumber << std::endl;
+    }
+    
+    virtual void boardPassengers(int count) {
+        int boarding = std::min(count, passengerCapacity - currentPassengers);
+        currentPassengers += boarding;
+        std::cout << "Посадка " << boarding << " пассажиров. Всего: " 
+                  << currentPassengers << "/" << passengerCapacity << std::endl;
+        if (boarding < count) {
+            std::cout << "Предупреждение: " << (count - boarding) 
+                      << " пассажиров не поместились!" << std::endl;
+        }
+    }
+    
+    virtual void disembarkPassengers(int count) {
+        int disembarking = std::min(count, currentPassengers);
+        currentPassengers -= disembarking;
+        std::cout << "Высадка " << disembarking << " пассажиров. Осталось: " 
+                  << currentPassengers << std::endl;
+    }
+    
+    virtual void displayPublicInfo() const {
+        std::cout << "Маршрут №" << routeNumber << ", Пассажиры: " 
+                  << currentPassengers << "/" << passengerCapacity;
+    }
+    
+    int getRouteNumber() const { return routeNumber; }
+    int getPassengerCount() const { return currentPassengers; }
+};
+
+class Bus : public PublicTransport, public virtual Vehicle {
+private:
+    std::string fuelType;
+    
+public:
+    Bus(std::string model, int maxSpeed, std::string plate, 
+        int route, int capacity, std::string fuel)
+        : Vehicle(model, maxSpeed, plate), 
+          PublicTransport(route, capacity),
+          fuelType(fuel) {
+        std::cout << "Конструктор Bus: " << model << ", топливо: " << fuel << std::endl;
+    }
+    
+    ~Bus() {
+        std::cout << "Деструктор Bus: " << getModel() << std::endl;
+    }
+
+    void displayInfo() const override {
+        Vehicle::displayInfo();
+        std::cout << ", Тип: Автобус, Топливо: " << fuelType;
+    }
+
+    void displayPublicInfo() const override {
+        PublicTransport::displayPublicInfo();
+        std::cout << ", Транспорт: Автобус (" << fuelType << ")";
+    }
+
+    void displayFullInfo() const {
+        displayInfo();
+        std::cout << ", ";
+        displayPublicInfo();
+        std::cout << std::endl;
+    }
+    
+    // Специфический метод для автобуса
+    void refuel(int liters) {
+        std::cout << "Автобус " << getModel() << " заправлен на " 
+                  << liters << " литров " << fuelType << std::endl;
+    }
+    
+    std::string getFuelType() const { return fuelType; }
+};
+
+class Tram : public PublicTransport, public virtual Vehicle {
+private:
+    double electricLineVoltage;
+    
+public:
+    Tram(std::string model, int maxSpeed, std::string plate,
+         int route, int capacity, double voltage)
+        : Vehicle(model, maxSpeed, plate),
+          PublicTransport(route, capacity),
+          electricLineVoltage(voltage) {
+        std::cout << "Конструктор Tram: " << model << ", напряжение " 
+                  << voltage << " В" << std::endl;
+    }
+    
+    ~Tram() {
+        std::cout << "Деструктор Tram: " << getModel() << std::endl;
+    }
+
+    void accelerate(int increment) override {
+        std::cout << "[Трамвай] ";
+        Vehicle::accelerate(increment * 0.8);
+    }
+    
+    void displayInfo() const override {
+        Vehicle::displayInfo();
+        std::cout << ", Тип: Трамвай, Напряжение: " << electricLineVoltage << " В";
+    }
+
+    void displayPublicInfo() const override {
+        PublicTransport::displayPublicInfo();
+        std::cout << ", Транспорт: Трамвай (контактная сеть)";
+    }
+
+    void displayFullInfo() const {
+        displayInfo();
+        std::cout << ", ";
+        displayPublicInfo();
+        std::cout << std::endl;
+    }
+
+    void connectToLine() {
+        std::cout << "Трамвай " << getModel() << " подключен к линии " 
+                  << electricLineVoltage << " В" << std::endl;
+    }
+    
+    double getVoltage() const { return electricLineVoltage; }
+};
+
+class Trolleybus : public PublicTransport, public virtual Vehicle {
+private:
+    double electricLineVoltage;
+    std::string batteryType;  // Тип аккумулятора для автономного хода
+    
+public:
+    Trolleybus(std::string model, int maxSpeed, std::string plate,
+               int route, int capacity, double voltage, std::string battery)
+        : Vehicle(model, maxSpeed, plate),
+          PublicTransport(route, capacity),
+          electricLineVoltage(voltage), batteryType(battery) {
+        std::cout << "Конструктор Trolleybus: " << model << std::endl;
+    }
+    
+    void displayFullInfo() const {
+        Vehicle::displayInfo();
+        std::cout << ", Тип: Троллейбус, Напряжение: " << electricLineVoltage 
+                  << " В, АКБ: " << batteryType << ", ";
+        PublicTransport::displayPublicInfo();
+        std::cout << std::endl;
+    }
+};
+
+int main() {
+    std::cout << "=== ИЕРАРХИЯ ОБЩЕСТВЕННОГО ТРАНСПОРТА ===\n\n";
+    
+    std::cout << "--- СОЗДАНИЕ АВТОБУСА ---\n";
+    Bus bus1("MAZ-203", 110, "A001AA", 12, 80, "Дизель");
+    std::cout << std::endl;
+    
+    std::cout << "--- СОЗДАНИЕ ТРАМВАЯ ---\n";
+    Tram tram1("71-623", 75, "B002BB", 5, 150, 550.0);
+    std::cout << std::endl;
+    
+    std::cout << "--- СОЗДАНИЕ ТРОЛЛЕЙБУСА ---\n";
+    Trolleybus trolley1("ЗиУ-682", 70, "C003CC", 8, 100, 600.0, "Литий-ионный");
+    std::cout << std::endl;
+    
+    std::cout << "=== РАБОТА АВТОБУСА ===\n";
+    bus1.displayFullInfo();
+    bus1.accelerate(30);
+    bus1.boardPassengers(45);
+    bus1.accelerate(20);
+    bus1.boardPassengers(40);
+    bus1.brake(25);
+    bus1.disembarkPassengers(30);
+    bus1.refuel(50);
+    std::cout << std::endl;
+    
+    std::cout << "=== РАБОТА ТРАМВАЯ ===\n";
+    tram1.displayFullInfo();
+    tram1.connectToLine();
+    tram1.accelerate(40);
+    tram1.boardPassengers(100);
+    tram1.accelerate(20);
+    tram1.boardPassengers(60);
+    tram1.brake(30);
+    tram1.disembarkPassengers(120);
+    std::cout << std::endl;
+    
+    std::cout << "=== ПОЛИМОРФИЗМ ЧЕРЕЗ VEHICLE ===\n";
+    std::vector<Vehicle*> vehicles;
+    vehicles.push_back(&bus1);
+    vehicles.push_back(&tram1);
+    
+    for (Vehicle* v : vehicles) {
+        v->displayInfo();
+        std::cout << std::endl;
+    }
+    
+    std::cout << "\n=== ПОЛИМОРФИЗМ ЧЕРЕЗ PUBLICTRANSPORT ===\n";
+    std::vector<PublicTransport*> transports;
+    transports.push_back(&bus1);
+    transports.push_back(&tram1);
+    
+    for (PublicTransport* pt : transports) {
+        pt->displayPublicInfo();
+        std::cout << std::endl;
+    }
+    
+    std::cout << "\n=== ПАРК ОБЩЕСТВЕННОГО ТРАНСПОРТА ===\n";
+    std::vector<Bus*> buses;
+    std::vector<Tram*> trams;
+    
+    buses.push_back(new Bus("MAN Lion's City", 120, "D004DD", 20, 90, "Газ"));
+    buses.push_back(new Bus("Volvo 7900", 100, "E005EE", 35, 85, "Электричество"));
+    
+    trams.push_back(new Tram("КTМ-5", 70, "F006FF", 2, 120, 600.0));
+    trams.push_back(new Tram("Tatra T3", 65, "G007GG", 9, 110, 550.0));
+    
+    std::cout << "\nАВТОБУСЫ:\n";
+    for (Bus* b : buses) {
+        b->displayFullInfo();
+    }
+    
+    std::cout << "\nТРАМВАИ:\n";
+    for (Tram* t : trams) {
+        t->displayFullInfo();
+    }
+    
+    for (Bus* b : buses) delete b;
+    for (Tram* t : trams) delete t;
+    
+    std::cout << "\n=== РАЗМЕРЫ ОБЪЕКТОВ ===\n";
+    std::cout << "Размер Vehicle: " << sizeof(Vehicle) << " байт" << std::endl;
+    std::cout << "Размер PublicTransport: " << sizeof(PublicTransport) << " байт" << std::endl;
+    std::cout << "Размер Bus: " << sizeof(Bus) << " байт" << std::endl;
+    std::cout << "Размер Tram: " << sizeof(Tram) << " байт" << std::endl;
+    
+    return 0;
+}
