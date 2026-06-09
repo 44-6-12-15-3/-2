@@ -1,0 +1,227 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <memory>
+
+class TransportUnit {
+public:
+    virtual double calculateToll(double distance) const = 0;
+    virtual void displayInfo() const = 0;
+    virtual ~TransportUnit() {}
+};
+
+class Car : public TransportUnit {
+private:
+    std::string model;
+    std::string licensePlate;
+    
+public:
+    Car(std::string m, std::string plate) : model(m), licensePlate(plate) {}
+    
+    double calculateToll(double distance) const override {
+        return distance * 0.1;  // 0.1 у.е. за км
+    }
+    
+    void displayInfo() const override {
+        std::cout << "Легковой автомобиль: " << model << " (" << licensePlate << ")";
+    }
+};
+
+class Truck : public TransportUnit {
+private:
+    std::string model;
+    std::string licensePlate;
+    double cargoWeight;
+    
+public:
+    Truck(std::string m, std::string plate, double weight) 
+        : model(m), licensePlate(plate), cargoWeight(weight) {}
+    
+    double calculateToll(double distance) const override {
+        return distance * 0.3 + 5.0;  // 0.3 за км + фикс. сбор 5.0
+    }
+    
+    void displayInfo() const override {
+        std::cout << "Грузовой автомобиль: " << model << " (" << licensePlate 
+                  << ", Вес груза: " << cargoWeight << " т)";
+    }
+};
+
+class Route {
+private:
+    std::string startPoint;
+    std::string endPoint;
+    double length;  // длина в км
+    
+public:
+    Route(std::string start, std::string end, double len) 
+        : startPoint(start), endPoint(end), length(len) {
+        if (length < 0) length = 0;
+    }
+    
+    void printInfo() const {
+        std::cout << "Маршрут: " << startPoint << " -> " << endPoint 
+                  << ", Длина: " << length << " км";
+    }
+    
+    double getLength() const { return length; }
+    std::string getStartPoint() const { return startPoint; }
+    std::string getEndPoint() const { return endPoint; }
+};
+
+class AssignedRoute {
+private:
+    Route route;
+    TransportUnit* transport;
+    
+public:
+    AssignedRoute(const Route& r, TransportUnit* t) 
+        : route(r), transport(t) {
+        if (transport == nullptr) {
+            std::cout << "Предупреждение: транспорт не назначен!\n";
+        }
+    }
+
+    double calculateTotalCost() const {
+        if (transport == nullptr) {
+            std::cout << "Ошибка: транспорт не назначен!\n";
+            return 0.0;
+        }
+        return transport->calculateToll(route.getLength());
+    }
+
+    void printAssignedRoute() const {
+        std::cout << "\n=== НАЗНАЧЕННЫЙ МАРШРУТ ===\n";
+        route.printInfo();
+        std::cout << "\nНазначенный транспорт: ";
+        if (transport != nullptr) {
+            transport->displayInfo();
+        } else {
+            std::cout << "Не назначен";
+        }
+        std::cout << "\nСтоимость проезда: " << calculateTotalCost() << " у.е.\n";
+    }
+
+    void assignTransport(TransportUnit* t) {
+        transport = t;
+        std::cout << "Транспорт переназначен!\n";
+    }
+
+    void modifyRoute(const Route& newRoute) {
+        std::cout << "Изменение маршрута (композиция не позволяет заменить объект полностью)\n";
+        std::cout << "Создайте новый AssignedRoute для нового маршрута\n";
+    }
+};
+
+class TransportFleet {
+private:
+    std::vector<std::unique_ptr<TransportUnit>> vehicles;
+    
+public:
+    void addVehicle(TransportUnit* vehicle) {
+        vehicles.push_back(std::unique_ptr<TransportUnit>(vehicle));
+    }
+    
+    TransportUnit* getVehicle(int index) {
+        if (index >= 0 && index < vehicles.size()) {
+            return vehicles[index].get();
+        }
+        return nullptr;
+    }
+    
+    size_t getSize() const { return vehicles.size(); }
+    
+    void displayAllVehicles() const {
+        std::cout << "\n=== ПАРК ТРАНСПОРТА ===\n";
+        for (size_t i = 0; i < vehicles.size(); i++) {
+            std::cout << i + 1 << ". ";
+            vehicles[i]->displayInfo();
+            std::cout << std::endl;
+        }
+    }
+};
+
+int main() {
+    std::cout << "=== СИСТЕМА НАЗНАЧЕНИЯ МАРШРУТОВ ===\n";
+    
+    TransportFleet fleet;
+    fleet.addVehicle(new Car("Toyota Camry", "A123BC"));
+    fleet.addVehicle(new Truck("Volvo FH16", "C789DE", 15.5));
+    fleet.addVehicle(new Car("Honda Accord", "B456CD"));
+    fleet.addVehicle(new Truck("KamAZ-5490", "D012EF", 20.0));
+    fleet.addVehicle(new Car("BMW X5", "E345FG"));
+    
+    fleet.displayAllVehicles();
+    
+    Route route1("Москва", "Санкт-Петербург", 705.0);
+    Route route2("Екатеринбург", "Челябинск", 210.0);
+    Route route3("Новосибирск", "Томск", 270.0);
+    Route route4("Казань", "Нижний Новгород", 395.0);
+    
+    std::cout << "\n=== ДОСТУПНЫЕ МАРШРУТЫ ===\n";
+    route1.printInfo();
+    std::cout << std::endl;
+    route2.printInfo();
+    std::cout << std::endl;
+    route3.printInfo();
+    std::cout << std::endl;
+    route4.printInfo();
+    std::cout << std::endl;
+    
+    std::cout << "\n=== НАЗНАЧЕНИЕ МАРШРУТОВ ===\n";
+    
+    AssignedRoute assigned1(route1, fleet.getVehicle(0));  // Москва-СПб на Toyota
+    AssignedRoute assigned2(route2, fleet.getVehicle(1));  // Екатеринбург-Челябинск на Volvo
+    AssignedRoute assigned3(route3, fleet.getVehicle(2));  // Новосибирск-Томск на Honda
+    AssignedRoute assigned4(route4, fleet.getVehicle(3));  // Казань-НН на KamAZ
+    
+    assigned1.printAssignedRoute();
+    assigned2.printAssignedRoute();
+    assigned3.printAssignedRoute();
+    assigned4.printAssignedRoute();
+    
+    std::cout << "\n=== ПЕРЕНАЗНАЧЕНИЕ ТРАНСПОРТА ===\n";
+    std::cout << "Переназначаем маршрут Москва-СПб на грузовик KamAZ:\n";
+    assigned1.assignTransport(fleet.getVehicle(3));
+    assigned1.printAssignedRoute();
+    
+    std::cout << "\n=== СРАВНЕНИЕ СТОИМОСТИ ДЛЯ РАЗНЫХ ТС ===\n";
+    
+    std::vector<Route> testRoutes = {
+        Route("Короткий маршрут", "Тест", 50.0),
+        Route("Средний маршрут", "Тест", 200.0),
+        Route("Длинный маршрут", "Тест", 1000.0)
+    };
+    
+    TransportUnit* car = fleet.getVehicle(0);
+    TransportUnit* truck = fleet.getVehicle(1);
+    
+    for (const auto& route : testRoutes) {
+        std::cout << "\n";
+        route.printInfo();
+        std::cout << "\n  Легковой автомобиль: " << car->calculateToll(route.getLength()) << " у.е.\n";
+        std::cout << "  Грузовой автомобиль: " << truck->calculateToll(route.getLength()) << " у.е.\n";
+        std::cout << "  Разница: " << (truck->calculateToll(route.getLength()) - car->calculateToll(route.getLength())) << " у.е.\n";
+    }
+    
+    std::cout << "\n=== ВСЕ НАЗНАЧЕННЫЕ МАРШРУТЫ ===\n";
+    std::vector<AssignedRoute> allAssignedRoutes;
+    allAssignedRoutes.push_back(assigned1);
+    allAssignedRoutes.push_back(assigned2);
+    allAssignedRoutes.push_back(assigned3);
+    allAssignedRoutes.push_back(assigned4);
+    
+    double totalRevenue = 0.0;
+    for (const auto& ar : allAssignedRoutes) {
+        totalRevenue += ar.calculateTotalCost();
+    }
+    
+    std::cout << "Общий доход от всех маршрутов: " << totalRevenue << " у.е.\n";
+    
+    std::cout << "\n=== ДЕМОНСТРАЦИЯ КОМПОЗИЦИИ ===\n";
+    std::cout << "Маршрут является неотъемлемой частью AssignedRoute.\n";
+    std::cout << "При уничтожении AssignedRoute, маршрут тоже уничтожается,\n";
+    std::cout << "но транспорт (агрегация) продолжает существовать в парке.\n";
+    
+    return 0;
+}
