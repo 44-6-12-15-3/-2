@@ -1,0 +1,181 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stdexcept>
+
+template<typename T>
+class Warehouse {
+private:
+    std::vector<T> items;
+    std::string warehouseName;
+    
+public:
+    Warehouse() : warehouseName("Безымянный склад") {}
+    
+    Warehouse(const std::string& name) : warehouseName(name) {}
+
+    void addItem(const T& item) {
+        items.push_back(item);
+        std::cout << "Добавлен груз: " << item 
+                  << " на склад \"" << warehouseName << "\"\n";
+    }
+
+    T getItem(int index) const {
+        if (index >= 0 && index < items.size()) {
+            return items[index];
+        } else {
+            throw std::out_of_range("Неверный индекс: " + std::to_string(index));
+        }
+    }
+
+    int getTotalItems() const {
+        return items.size();
+    }
+
+    void removeItem(int index) {
+        if (index >= 0 && index < items.size()) {
+            std::cout << "Удален груз: " << items[index] 
+                      << " со склада \"" << warehouseName << "\"\n";
+            items.erase(items.begin() + index);
+        } else {
+            throw std::out_of_range("Неверный индекс для удаления: " + std::to_string(index));
+        }
+    }
+
+    void clear() {
+        items.clear();
+        std::cout << "Склад \"" << warehouseName << "\" очищен\n";
+    }
+
+    void displayAll() const {
+        std::cout << "\n=== Содержимое склада \"" << warehouseName << "\" ===\n";
+        if (items.empty()) {
+            std::cout << "Склад пуст\n";
+        } else {
+            for (size_t i = 0; i < items.size(); ++i) {
+                std::cout << i + 1 << ". " << items[i] << "\n";
+            }
+        }
+        std::cout << "Всего грузов: " << items.size() << "\n";
+        std::cout << "===================================\n";
+    }
+
+    T& operator[](size_t index) {
+        return items[index];
+    }
+    
+    const T& operator[](size_t index) const {
+        return items[index];
+    }
+
+    std::string getName() const { return warehouseName; }
+
+    void setName(const std::string& name) { warehouseName = name; }
+};
+
+struct Cargo {
+    std::string name;
+    double weight;
+    int id;
+    
+    Cargo(const std::string& n = "", double w = 0.0, int i = 0) 
+        : name(n), weight(w), id(i) {}
+
+    friend std::ostream& operator<<(std::ostream& os, const Cargo& c) {
+        os << "Cargo{id:" << c.id << ", name:'" << c.name << "', weight:" << c.weight << "kg}";
+        return os;
+    }
+
+    bool operator==(const Cargo& other) const {
+        return id == other.id;
+    }
+};
+
+int main() {
+    std::cout << "=== ШАБЛОННЫЙ КЛАСС СКЛАД ===\n\n";
+
+    std::cout << "--- СКЛАД ЦЕЛЫХ ЧИСЕЛ (Warehouse<int>) ---\n";
+    Warehouse<int> numberWarehouse("Склад чисел");
+    
+    numberWarehouse.addItem(100);
+    numberWarehouse.addItem(250);
+    numberWarehouse.addItem(42);
+    numberWarehouse.addItem(777);
+    numberWarehouse.addItem(15);
+    
+    numberWarehouse.displayAll();
+    
+    std::cout << "Количество грузов: " << numberWarehouse.getTotalItems() << "\n";
+    std::cout << "Груз с индексом 2: " << numberWarehouse.getItem(2) << "\n\n";
+
+    numberWarehouse.removeItem(1);
+    numberWarehouse.displayAll();
+
+    std::cout << "\n--- СКЛАД СТРОК (Warehouse<std::string>) ---\n";
+    Warehouse<std::string> stringWarehouse("Склад названий");
+    
+    stringWarehouse.addItem("Яблоки");
+    stringWarehouse.addItem("Апельсины");
+    stringWarehouse.addItem("Бананы");
+    stringWarehouse.addItem("Виноград");
+    stringWarehouse.addItem("Арбузы");
+    
+    stringWarehouse.displayAll();
+    
+    std::cout << "Груз с индексом 3: " << stringWarehouse.getItem(3) << "\n";
+
+    std::cout << "Первый груз через оператор[]: " << stringWarehouse[0] << "\n";
+
+    std::cout << "\n--- СКЛАД ВЕЩЕСТВЕННЫХ ЧИСЕЛ (Warehouse<double>) ---\n";
+    Warehouse<double> doubleWarehouse("Склад весов");
+    
+    doubleWarehouse.addItem(10.5);
+    doubleWarehouse.addItem(20.7);
+    doubleWarehouse.addItem(30.2);
+    doubleWarehouse.addItem(15.9);
+    
+    doubleWarehouse.displayAll();
+
+    std::cout << "\n--- СКЛАД ПОЛЬЗОВАТЕЛЬСКОГО ТИПА (Warehouse<Cargo>) ---\n";
+    Warehouse<Cargo> cargoWarehouse("Склад грузов");
+    
+    cargoWarehouse.addItem(Cargo("Сталь", 1000.5, 101));
+    cargoWarehouse.addItem(Cargo("Древесина", 500.2, 102));
+    cargoWarehouse.addItem(Cargo("Пластик", 300.0, 103));
+    cargoWarehouse.addItem(Cargo("Стекло", 250.8, 104));
+    
+    cargoWarehouse.displayAll();
+    
+    Cargo thirdCargo = cargoWarehouse.getItem(2);
+    std::cout << "Груз с индексом 2: " << thirdCargo << "\n";
+    
+    std::cout << "\n--- РАБОТА С НЕСКОЛЬКИМИ СКЛАДАМИ ---\n";
+    
+    Warehouse<int> freshWarehouse("Новый склад");
+    freshWarehouse.addItem(1);
+    freshWarehouse.addItem(2);
+    freshWarehouse.addItem(3);
+    freshWarehouse.displayAll();
+    
+    std::cout << "\n--- КОПИРОВАНИЕ И ПЕРЕМЕЩЕНИЕ ---\n";
+    
+    Warehouse<std::string> originalWarehouse("Оригинальный склад");
+    originalWarehouse.addItem("Книги");
+    originalWarehouse.addItem("Тетради");
+    
+    Warehouse<std::string> copiedWarehouse = originalWarehouse;
+    copiedWarehouse.setName("Копия склада");
+    copiedWarehouse.displayAll();
+    
+    std::cout << "\n=== СТАТИСТИКА ПО ВСЕМ СКЛАДАМ ===\n";
+    std::cout << "Склад чисел: " << numberWarehouse.getTotalItems() << " грузов\n";
+    std::cout << "Склад строк: " << stringWarehouse.getTotalItems() << " грузов\n";
+    std::cout << "Склад весов: " << doubleWarehouse.getTotalItems() << " грузов\n";
+    std::cout << "Склад грузов: " << cargoWarehouse.getTotalItems() << " грузов\n";
+    
+    std::cout << "\n--- ОЧИСТКА СКЛАДОВ ---\n";
+    numberWarehouse.clear();
+    numberWarehouse.displayAll();
+    
+    return 0;
+}
