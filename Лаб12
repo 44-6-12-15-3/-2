@@ -1,0 +1,136 @@
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <string>
+#include <iomanip>
+
+class Vehicle {
+protected:
+    std::string name;
+    double speed;
+    double maxSpeed;
+    double position;
+    
+public:
+    Vehicle(std::string n, double maxS) : name(n), speed(0), maxSpeed(maxS / 3.6), position(0) {}
+    
+    virtual ~Vehicle() {}
+    
+    virtual void update(double roadMaxSpeed, double dt) {
+        double target = std::min(maxSpeed, roadMaxSpeed);
+        if (speed < target) {
+            speed += 2.0 * dt;
+            if (speed > target) speed = target;
+        }
+        position += speed * dt;
+    }
+    
+    virtual void display() const {
+        std::cout << name << " | " << std::fixed << std::setprecision(1) 
+                  << speed * 3.6 << " км/ч | " << std::setprecision(0) << position << " м";
+    }
+    
+    double getPosition() const { return position; }
+    double getSpeed() const { return speed; }
+};
+
+class Car : public Vehicle {
+public:
+    Car(std::string n, double maxS) : Vehicle(n, maxS) {}
+    
+    void display() const override {
+        std::cout << "[A] ";
+        Vehicle::display();
+    }
+};
+
+class Truck : public Vehicle {
+public:
+    Truck(std::string n, double maxS) : Vehicle(n, maxS) {}
+    
+    void update(double roadMaxSpeed, double dt) override {
+        double target = std::min(maxSpeed, roadMaxSpeed);
+        if (speed < target) {
+            speed += 1.0 * dt;
+            if (speed > target) speed = target;
+        }
+        position += speed * dt;
+    }
+    
+    void display() const override {
+        std::cout << "[T] ";
+        Vehicle::display();
+    }
+};
+
+class RoadSegment {
+    double length;
+    double maxSpeed;
+    
+public:
+    RoadSegment(double len, double maxS) : length(len), maxSpeed(maxS / 3.6) {}
+    
+    double getLength() const { return length; }
+    double getMaxSpeed() const { return maxSpeed; }
+};
+
+class TrafficFlow {
+    std::vector<std::unique_ptr<Vehicle>> vehicles;
+    RoadSegment& road;
+    
+public:
+    TrafficFlow(RoadSegment& r) : road(r) {}
+    
+    void addVehicle(std::unique_ptr<Vehicle> v) {
+        vehicles.push_back(std::move(v));
+    }
+    
+    void simulate(double dt, double duration) {
+        double time = 0;
+        
+        std::cout << "\nСимуляция " << duration << " с\n";
+        
+        while (time <= duration) {
+            if (time < 0.1 || int(time) % 5 == 0) {
+                std::cout << "\nt=" << time << "c\n";
+                for (size_t i = 0; i < vehicles.size(); i++) {
+                    std::cout << "  " << i+1 << ". ";
+                    vehicles[i]->display();
+                    std::cout << std::endl;
+                }
+            }
+            
+            for (auto& v : vehicles) {
+                v->update(road.getMaxSpeed(), dt);
+                if (v->getPosition() > road.getLength()) {
+                    v->update(0, dt);
+                }
+            }
+            
+            time += dt;
+        }
+        
+        std::cout << "\nРезультат:\n";
+        for (size_t i = 0; i < vehicles.size(); i++) {
+            std::cout << "  " << i+1 << ". ";
+            vehicles[i]->display();
+            std::cout << std::endl;
+        }
+    }
+};
+
+int main() {
+    std::cout << "ТРАНСПОРТНЫЙ ПОТОК\n";
+    
+    RoadSegment road(500, 60);
+    TrafficFlow traffic(road);
+    
+    traffic.addVehicle(std::make_unique<Car>("Toyota", 180));
+    traffic.addVehicle(std::make_unique<Truck>("Volvo", 100));
+    traffic.addVehicle(std::make_unique<Car>("Honda", 190));
+    traffic.addVehicle(std::make_unique<Truck>("KamAZ", 90));
+    
+    traffic.simulate(0.5, 20);
+    
+    return 0;
+}
