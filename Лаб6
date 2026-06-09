@@ -1,0 +1,194 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+class Vehicle {
+private:
+    std::string model;
+    int speed;
+    int maxSpeed;
+    std::string licensePlate;
+    bool isDispatched;
+
+public:
+    Vehicle(std::string m, int maxS, std::string plate = "Не указан") 
+        : model(m), speed(0), maxSpeed(maxS), licensePlate(plate), isDispatched(false) {}
+    
+    void accelerate(int increment) {
+        if (increment > 0) {
+            speed += increment;
+            if (speed > maxSpeed) {
+                speed = maxSpeed;
+                std::cout << model << " достиг максимальной скорости " << maxSpeed << " км/ч!\n";
+            } else {
+                std::cout << model << " разогнался до " << speed << " км/ч\n";
+            }
+        }
+    }
+
+    void brake(int decrement) {
+        if (decrement > 0) {
+            speed -= decrement;
+            if (speed < 0) {
+                speed = 0;
+            }
+            std::cout << model << " замедлился до " << speed << " км/ч\n";
+        }
+    }
+    
+    void registerVehicle() {
+        if (!isDispatched) {
+            isDispatched = true;
+            DispatchCenter::incrementDispatched();  // Увеличиваем счетчик через статический метод
+            std::cout << "Транспортное средство " << model 
+                      << " (госномер: " << licensePlate << ") зарегистрировано в диспетчерской.\n";
+        } else {
+            std::cout << "Транспортное средство " << model << " уже зарегистрировано!\n";
+        }
+    }
+    
+    void displayStatus() const {
+        std::cout << "Транспортное средство: " << model 
+                  << ", Скорость: " << speed << "/" << maxSpeed << " км/ч"
+                  << ", Номер: " << licensePlate
+                  << ", Статус: " << (isDispatched ? "Зарегистрирован" : "Не зарегистрирован") << "\n";
+    }
+    
+    std::string getModel() const { return model; }
+};
+
+class DispatchCenter {
+private:
+    static int totalVehiclesDispatched;
+    static int todayVehicles;
+    static std::string centerName;
+    
+public:
+    static void incrementDispatched() {
+        totalVehiclesDispatched++;
+        todayVehicles++;
+    }
+    
+    static void report() {
+        std::cout << "\n=== ОТЧЕТ ДИСПЕТЧЕРСКОЙ СЛУЖБЫ ===" << std::endl;
+        std::cout << "Диспетчерский центр: " << centerName << std::endl;
+        std::cout << "Всего обслужено транспортных средств: " << totalVehiclesDispatched << std::endl;
+        std::cout << "Обслужено сегодня: " << todayVehicles << std::endl;
+        std::cout << "===================================\n" << std::endl;
+    }
+    
+    static void resetDailyStats() {
+        todayVehicles = 0;
+        std::cout << "Дневная статистика сброшена.\n";
+    }
+    
+    static void setCenterName(const std::string& name) {
+        centerName = name;
+    }
+    
+    static int getTotalDispatched() {
+        return totalVehiclesDispatched;
+    }
+    
+    void displayInfo() const {
+        std::cout << "Диспетчерский центр " << centerName 
+                  << " обслужил " << totalVehiclesDispatched << " ТС\n";
+    }
+};
+
+int DispatchCenter::totalVehiclesDispatched = 0;
+int DispatchCenter::todayVehicles = 0;
+std::string DispatchCenter::centerName = "Центральная диспетчерская";
+
+class VehicleRegistrationHelper {
+private:
+    std::string helperName;
+    
+public:
+    VehicleRegistrationHelper(const std::string& name) : helperName(name) {
+        std::cout << "Помощник регистрации \"" << helperName << "\" активирован.\n";
+    }
+    
+    void registerVehicle(Vehicle& vehicle) {
+        vehicle.registerVehicle();
+    }
+};
+
+int main() {
+    std::cout << "=== ДИСПЕТЧЕРСКАЯ СЛУЖБА ===\n\n";
+    
+    std::cout << "Текущая статистика (до регистрации ТС):\n";
+    DispatchCenter::report();
+    
+    Vehicle car1("Toyota Camry", 220, "A123BC");
+    Vehicle car2("Honda Accord", 210, "B456CD");
+    Vehicle truck1("Volvo FH16", 140, "C789DE");
+    Vehicle truck2("KamAZ-5490", 120, "D012EF");
+    Vehicle motorcycle("Harley Davidson", 180, "E345FG");
+    Vehicle bus("Mercedes Bus", 160, "F678GH");
+    
+    std::cout << "=== СОСТОЯНИЕ ТС ДО РЕГИСТРАЦИИ ===\n";
+    car1.displayStatus();
+    car2.displayStatus();
+    truck1.displayStatus();
+    
+    std::cout << "\n=== РЕГИСТРАЦИЯ ТРАНСПОРТА ===\n";
+    car1.registerVehicle();
+    truck1.registerVehicle();
+    car2.registerVehicle();
+    motorcycle.registerVehicle();
+
+    std::cout << "\n--- Попытка повторной регистрации ---\n";
+    car1.registerVehicle();
+    
+    std::cout << "\n--- Регистрация остальных ТС ---\n";
+    truck2.registerVehicle();
+    bus.registerVehicle();
+
+    DispatchCenter::report();
+
+    std::cout << "Доступ к статистике через статический метод: ";
+    std::cout << "Обслужено ТС: " << DispatchCenter::getTotalDispatched() << "\n\n";
+
+    std::cout << "=== ИЗМЕНЕНИЕ НАЗВАНИЯ ДИСПЕТЧЕРСКОЙ ===\n";
+    DispatchCenter::setCenterName("Северное отделение");
+    DispatchCenter::report();
+
+    std::cout << "=== СТАТУС ВСЕХ ТРАНСПОРТНЫХ СРЕДСТВ ===\n";
+    car1.displayStatus();
+    car2.displayStatus();
+    truck1.displayStatus();
+    truck2.displayStatus();
+    motorcycle.displayStatus();
+    bus.displayStatus();
+    
+    std::cout << "\n=== ИСПОЛЬЗОВАНИЕ ПОМОЩНИКА ===\n";
+    VehicleRegistrationHelper helper("Авторегистратор");
+    Vehicle newCar("BMW X5", 250, "G901HI");
+    helper.registerVehicle(newCar);
+    DispatchCenter::report();
+    
+    std::cout << "\n=== СБРОС ДНЕВНОЙ СТАТИСТИКИ ===\n";
+    DispatchCenter::resetDailyStats();
+    DispatchCenter::report();
+    
+    std::cout << "=== ДЕМОНСТРАЦИЯ НЕЗАВИСИМОСТИ ===\n";
+    DispatchCenter center1;
+    DispatchCenter center2;
+    
+    center1.displayInfo();
+    center2.displayInfo();
+    
+    std::cout << "\nИзменяем имя центра через один объект:\n";
+    DispatchCenter::setCenterName("Южное отделение");
+    
+    center1.displayInfo();
+    center2.displayInfo();
+
+    std::cout << "\n=== ДОПОЛНИТЕЛЬНАЯ РЕГИСТРАЦИЯ ===\n";
+    Vehicle sportsCar("Ferrari F40", 320, "H901JK");
+    sportsCar.registerVehicle();
+    DispatchCenter::report();
+    
+    return 0;
+}
