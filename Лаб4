@@ -1,0 +1,82 @@
+#include <iostream>
+#include <vector>
+
+class TransportUnit {
+public:
+    virtual double calculateToll(double distance) const = 0;
+    virtual void displayInfo() const = 0;
+    virtual ~TransportUnit() {}
+};
+
+class Car : public TransportUnit {
+private:
+    std::string model;
+    std::string licensePlate;
+    
+public:
+    Car(std::string m, std::string plate) : model(m), licensePlate(plate) {}
+    
+    double calculateToll(double distance) const override {
+        return distance * 0.1;
+    }
+    
+    void displayInfo() const override {
+        std::cout << "Легковой автомобиль: " << model << " (" << licensePlate << ")";
+    }
+    
+    ~Car() {}
+};
+
+class Truck : public TransportUnit {
+private:
+    std::string model;
+    std::string licensePlate;
+    
+public:
+    Truck(std::string m, std::string plate) : model(m), licensePlate(plate) {}
+    
+    double calculateToll(double distance) const override {
+        return distance * 0.3 + 5.0;
+    }
+    
+    void displayInfo() const override {
+        std::cout << "Грузовой автомобиль: " << model << " (" << licensePlate << ")";
+    }
+    
+    ~Truck() {}
+};
+
+int main() {
+    double distance = 100.0;
+    
+    std::cout << "Дистанция: " << distance << " км\n\n";
+    
+    std::vector<TransportUnit*> vehicles;
+    
+    vehicles.push_back(new Car("Toyota Camry", "A123BC"));
+    vehicles.push_back(new Car("Honda Accord", "B456CD"));
+    vehicles.push_back(new Truck("Volvo FH16", "C789DE"));
+    vehicles.push_back(new Truck("KamAZ-5490", "D012EF"));
+    vehicles.push_back(new Car("BMW X5", "E345FG"));
+    
+    std::cout << "=== РАСЧЕТ ПЛАТЫ ===\n";
+    double total = 0.0;
+    
+    for (size_t i = 0; i < vehicles.size(); i++) {
+        std::cout << i + 1 << ". ";
+        vehicles[i]->displayInfo();
+        
+        double toll = vehicles[i]->calculateToll(distance);
+        std::cout << " -> Плата: " << toll << " у.е.\n";
+        
+        total += toll;
+    }
+    
+    std::cout << "\nОбщая сумма: " << total << " у.е.\n";
+    
+    for (TransportUnit* v : vehicles) {
+        delete v;
+    }
+    
+    return 0;
+}
