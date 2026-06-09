@@ -1,0 +1,118 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+class Vehicle {
+private:
+    std::string model;
+    int speed;
+    int maxSpeed;
+
+public:
+    Vehicle(std::string m, int maxS) : model(m), speed(0), maxSpeed(maxS) {}
+    
+    void accelerate(int increment) {
+        if (increment > 0) {
+            speed += increment;
+            if (speed > maxSpeed) {
+                speed = maxSpeed;
+                std::cout << model << " достиг максимальной скорости " << maxSpeed << " км/ч!\n";
+            } else {
+                std::cout << model << " разогнался до " << speed << " км/ч\n";
+            }
+        }
+    }
+    
+    void brake(int decrement) {
+        if (decrement > 0) {
+            speed -= decrement;
+            if (speed < 0) {
+                speed = 0;
+            }
+            std::cout << model << " замедлился до " << speed << " км/ч\n";
+        }
+    }
+    
+    void displayStatus() const {
+        std::cout << "Транспортное средство: " << model 
+                  << ", Скорость: " << speed 
+                  << "/" << maxSpeed << " км/ч\n";
+    }
+    
+    std::string getModel() const { return model; }
+    int getSpeed() const { return speed; }
+    int getMaxSpeed() const { return maxSpeed; }
+};
+
+int main() {
+    std::vector<Vehicle> fleet;
+    
+    fleet.push_back(Vehicle("Tesla Model S", 250));
+    fleet.push_back(Vehicle("Toyota Camry", 220));
+    fleet.push_back(Vehicle("Harley Davidson", 180));
+    fleet.push_back(Vehicle("Mercedes-Benz E-Class", 240));
+    fleet.push_back(Vehicle("Volkswagen Golf", 210));
+    
+    std::cout << "=== ПАРК ТРАНСПОРТНЫХ СРЕДСТВ ===\n";
+    std::cout << "Начальное состояние:\n";
+    for (const auto& vehicle : fleet) {
+        vehicle.displayStatus();
+    }
+    
+    std::cout << "\n=== СИМУЛЯЦИЯ ДВИЖЕНИЯ ===\n";
+    
+    std::cout << "\n--- Разгон Tesla ---\n";
+    fleet[0].accelerate(80);  // Tesla разгоняется
+    fleet[0].accelerate(100); // Еще разгон
+    
+    std::cout << "\n--- Разгон Toyota ---\n";
+    fleet[1].accelerate(60);
+    fleet[1].accelerate(50);
+    
+    std::cout << "\n--- Разгон Harley Davidson ---\n";
+    fleet[2].accelerate(40);
+    fleet[2].accelerate(80);
+    
+    std::cout << "\n--- Разгон Mercedes ---\n";
+    fleet[3].accelerate(90);
+    
+    std::cout << "\n--- Разгон Volkswagen ---\n";
+    fleet[4].accelerate(70);
+    
+    std::cout << "\n=== ТОРМОЖЕНИЕ ===\n";
+    
+    std::cout << "\n--- Торможение Tesla ---\n";
+    fleet[0].brake(50);  // Tesla тормозит
+    
+    std::cout << "\n--- Торможение Toyota ---\n";
+    fleet[1].brake(30);
+    
+    std::cout << "\n--- Торможение Mercedes ---\n";
+    fleet[3].brake(40);
+    
+    std::cout << "\n=== ФИНАЛЬНЫЙ СТАТУС ВСЕХ ТС ===\n";
+    for (int i = 0; i < fleet.size(); i++) {
+        std::cout << i + 1 << ". ";
+        fleet[i].displayStatus();
+    }
+    
+    std::cout << "\n=== СТАТИСТИКА ===\n";
+    int totalSpeed = 0;
+    for (const auto& vehicle : fleet) {
+        totalSpeed += vehicle.getSpeed();
+    }
+    std::cout << "Средняя скорость парка: " << totalSpeed / fleet.size() << " км/ч\n";
+    
+    int maxSpeedVehicle = 0;
+    std::string fastestModel;
+    for (const auto& vehicle : fleet) {
+        if (vehicle.getSpeed() > maxSpeedVehicle) {
+            maxSpeedVehicle = vehicle.getSpeed();
+            fastestModel = vehicle.getModel();
+        }
+    }
+    std::cout << "Самое быстрое ТС: " << fastestModel 
+              << " (" << maxSpeedVehicle << " км/ч)\n";
+    
+    return 0;
+}
