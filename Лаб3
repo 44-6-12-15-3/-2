@@ -1,0 +1,123 @@
+#include <iostream>
+#include <string>
+
+class Vehicle {
+protected:  // Изменяем с private на protected, чтобы наследники могли доступаться
+    std::string model;
+    int speed;
+    int maxSpeed;
+
+public:
+    Vehicle(std::string m, int maxS) : model(m), speed(0), maxSpeed(maxS) {}
+    
+    void accelerate(int increment) {
+        if (increment > 0) {
+            speed += increment;
+            if (speed > maxSpeed) {
+                speed = maxSpeed;
+                std::cout << model << " достиг максимальной скорости " << maxSpeed << " км/ч!\n";
+            } else {
+                std::cout << model << " разогнался до " << speed << " км/ч\n";
+            }
+        }
+    }
+    
+    void brake(int decrement) {
+        if (decrement > 0) {
+            speed -= decrement;
+            if (speed < 0) {
+                speed = 0;
+            }
+            std::cout << model << " замедлился до " << speed << " км/ч\n";
+        }
+    }
+    
+    virtual void getStatus() const {
+        std::cout << "Транспортное средство: " << model 
+                  << ", Скорость: " << speed 
+                  << "/" << maxSpeed << " км/ч\n";
+    }
+    
+    virtual ~Vehicle() {}
+    
+    std::string getModel() const { return model; }
+    int getSpeed() const { return speed; }
+    int getMaxSpeed() const { return maxSpeed; }
+};
+
+class FreightVehicle : public Vehicle {
+private:
+    double cargoCapacity;
+
+public:
+    FreightVehicle(std::string m, int maxS, double capacity) 
+        : Vehicle(m, maxS), cargoCapacity(capacity) {
+    }
+    
+    void getStatus() const override {
+        Vehicle::getStatus();
+        std::cout << "  Грузоподъемность: " << cargoCapacity << " тонн\n";
+    }
+    
+    void loadCargo(double tons) {
+        if (tons <= cargoCapacity) {
+            std::cout << model << " загружен на " << tons << " тонн. " 
+                      << "Осталось места: " << cargoCapacity - tons << " тонн\n";
+        } else {
+            std::cout << "Ошибка: превышена грузоподъемность! "
+                      << "Максимум: " << cargoCapacity << " тонн, "
+                      << "попытка загрузить: " << tons << " тонн\n";
+        }
+    }
+    
+    double getCargoCapacity() const { return cargoCapacity; }
+};
+
+int main() {
+    std::cout << "=== ГРУЗОВОЙ ТРАНСПОРТ ===\n\n";
+    
+    Vehicle car("Toyota Camry", 220);
+    
+    FreightVehicle truck1("Volvo FH16", 140, 25.5);
+    FreightVehicle truck2("KamAZ-5490", 120, 20.0);
+    FreightVehicle truck3("Mercedes Actros", 130, 30.0);
+    
+    std::cout << "--- Начальный статус ---\n";
+    car.getStatus();
+    std::cout << "\n";
+    truck1.getStatus();
+    truck2.getStatus();
+    truck3.getStatus();
+    
+    std::cout << "\n--- Симуляция движения ---\n";
+    truck1.accelerate(40);
+    truck1.accelerate(50);
+    truck2.accelerate(30);
+    truck3.accelerate(60);
+    
+    std::cout << "\n--- Работа с грузом ---\n";
+    truck1.loadCargo(10.5);
+    truck1.loadCargo(15.0);  // Еще 15 тонн (в сумме 25.5)
+    truck1.loadCargo(5.0);   // Превышение!
+    
+    std::cout << "\n--- Торможение ---\n";
+    truck1.brake(30);
+    
+    std::cout << "\n--- Финальный статус ---\n";
+    car.getStatus();
+    truck1.getStatus();
+    truck2.getStatus();
+    truck3.getStatus();
+    
+    std::cout << "\n--- Демонстрация полиморфизма ---\n";
+    // Массив указателей на базовый класс
+    Vehicle* vehicles[] = {&car, &truck1, &truck2, &truck3};
+    
+    for (int i = 0; i < 4; i++) {
+        std::cout << i + 1 << ". ";
+        vehicles[i]->getStatus();
+        std::cout << "\n";
+    }
+    
+    return 0;
+}
