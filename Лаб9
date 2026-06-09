@@ -1,0 +1,138 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+
+class Vehicle {
+private:
+    std::string model;
+    int speed;
+    int maxSpeed;
+    std::string licensePlate;
+
+public:
+    Vehicle(std::string m, int maxS, std::string plate = "Не указан") 
+        : model(m), speed(0), maxSpeed(maxS), licensePlate(plate) {}
+    
+    bool operator<(const Vehicle& other) const {
+        return this->maxSpeed < other.maxSpeed;
+    }
+    
+    bool operator>(const Vehicle& other) const {
+        return this->maxSpeed > other.maxSpeed;
+    }
+
+    bool operator==(const Vehicle& other) const {
+        return this->maxSpeed == other.maxSpeed;
+    }
+    
+    void display() const {
+        std::cout << model << " (госномер: " << licensePlate 
+                  << ", макс. скорость: " << maxSpeed << " км/ч)";
+    }
+    
+    std::string getModel() const { return model; }
+    int getMaxSpeed() const { return maxSpeed; }
+    
+    void accelerate(int increment) {
+        speed += increment;
+        if (speed > maxSpeed) speed = maxSpeed;
+    }
+};
+
+std::ostream& operator<<(std::ostream& os, const Vehicle& v) {
+    os << v.getModel() << " (" << v.getMaxSpeed() << " км/ч)";
+    return os;
+}
+
+int main() {
+    std::cout << "=== ОПЕРАТОР СРАВНЕНИЯ ТРАНСПОРТНЫХ СРЕДСТВ ===\n\n";
+
+    std::vector<Vehicle> vehicles;
+
+    vehicles.push_back(Vehicle("Toyota Camry", 220, "A123BC"));
+    vehicles.push_back(Vehicle("Lada Granta", 180, "B456CD"));
+    vehicles.push_back(Vehicle("Tesla Model S", 250, "C789DE"));
+    vehicles.push_back(Vehicle("ZAZ-968", 120, "D012EF"));
+    vehicles.push_back(Vehicle("BMW M5", 305, "E345FG"));
+    vehicles.push_back(Vehicle("Volvo XC90", 210, "F678GH"));
+    vehicles.push_back(Vehicle("Ferrari F40", 320, "G901HI"));
+    vehicles.push_back(Vehicle("Kia Rio", 190, "H123JK"));
+    vehicles.push_back(Vehicle("Mercedes S600", 250, "I456LM"));
+    vehicles.push_back(Vehicle("Honda Civic", 210, "J789NO"));
+
+    std::cout << "=== ИСХОДНЫЙ ПОРЯДОК ===\n";
+    for (size_t i = 0; i < vehicles.size(); ++i) {
+        std::cout << i + 1 << ". ";
+        vehicles[i].display();
+        std::cout << std::endl;
+    }
+    
+    std::cout << "\n=== СОРТИРОВКА ПО ВОЗРАСТАНИЮ (std::sort) ===\n";
+    std::sort(vehicles.begin(), vehicles.end());
+    
+    for (size_t i = 0; i < vehicles.size(); ++i) {
+        std::cout << i + 1 << ". ";
+        vehicles[i].display();
+        std::cout << std::endl;
+    }
+    
+    std::cout << "\n=== СОРТИРОВКА ПО УБЫВАНИЮ ===\n";
+    std::sort(vehicles.begin(), vehicles.end(), std::greater<Vehicle>());
+    
+    for (size_t i = 0; i < vehicles.size(); ++i) {
+        std::cout << i + 1 << ". ";
+        vehicles[i].display();
+        std::cout << std::endl;
+    }
+    
+    std::cout << "\n=== ДЕМОНСТРАЦИЯ ОПЕРАТОРОВ СРАВНЕНИЯ ===\n";
+    
+    Vehicle car1("BMW X5", 250, "X001XX");
+    Vehicle car2("Audi Q7", 250, "X002XX");
+    Vehicle car3("Lada Kalina", 170, "X003XX");
+    
+    std::cout << "Сравниваем:\n";
+    car1.display(); std::cout << " и "; car2.display(); std::cout << std::endl;
+    
+    if (car1 == car2) {
+        std::cout << "У них одинаковая максимальная скорость!\n";
+    } else if (car1 < car2) {
+        std::cout << car1.getModel() << " медленнее " << car2.getModel() << std::endl;
+    } else {
+        std::cout << car1.getModel() << " быстрее " << car2.getModel() << std::endl;
+    }
+    
+    std::cout << "\n";
+    car2.display(); std::cout << " и "; car3.display(); std::cout << std::endl;
+    
+    if (car2 == car3) {
+        std::cout << "У них одинаковая максимальная скорость!\n";
+    } else if (car2 < car3) {
+        std::cout << car2.getModel() << " медленнее " << car3.getModel() << std::endl;
+    } else {
+        std::cout << car2.getModel() << " быстрее " << car3.getModel() << std::endl;
+    }
+    
+    std::cout << "\n=== ПОИСК ЭКСТРЕМУМОВ ===\n";
+    
+    auto slowest = std::min_element(vehicles.begin(), vehicles.end());
+    std::cout << "Самый медленный: ";
+    slowest->display();
+    std::cout << std::endl;
+    
+    auto fastest = std::max_element(vehicles.begin(), vehicles.end());
+    std::cout << "Самый быстрый: ";
+    fastest->display();
+    std::cout << std::endl;
+    
+    std::cout << "\n=== СТАТИСТИКА ===\n";
+    int totalSpeed = 0;
+    for (const auto& v : vehicles) {
+        totalSpeed += v.getMaxSpeed();
+    }
+    std::cout << "Средняя максимальная скорость: " 
+              << totalSpeed / vehicles.size() << " км/ч\n";
+    
+    return 0;
+}
