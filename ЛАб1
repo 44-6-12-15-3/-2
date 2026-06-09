@@ -1,0 +1,54 @@
+#include <iostream>
+#include <string>
+
+class Vehicle {
+private:
+    std::string brand;
+    int maxSpeed;
+    int currentSpeed;
+
+public:
+    Vehicle(std::string b, int max) {
+        brand = b;
+        maxSpeed = max;
+        currentSpeed = 0;
+    }
+    
+    // Ускорение
+    void accelerate(int increment) {
+        currentSpeed += increment;
+        if (currentSpeed > maxSpeed) {
+            currentSpeed = maxSpeed;
+        }
+    }
+    
+    // Торможение
+    void brake(int decrement) {
+        currentSpeed -= decrement;
+        if (currentSpeed < 0) {
+            currentSpeed = 0;
+        }
+    }
+    
+    void getStatus() {
+        std::cout << "Марка: " << brand << std::endl;
+        std::cout << "Максимальная скорость: " << maxSpeed << std::endl;
+        std::cout << "Текущая скорость: " << currentSpeed << std::endl;
+    }
+};
+
+int main() {
+    Vehicle car("Toyota", 200);
+    
+    car.getStatus();
+    std::cout << "---" << std::endl;
+    
+    car.accelerate(150);
+    car.getStatus();
+    std::cout << "---" << std::endl;
+    
+    car.brake(50);
+    car.getStatus();
+    
+    return 0;
+}
