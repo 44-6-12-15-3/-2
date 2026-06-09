@@ -1,0 +1,90 @@
+#include <iostream>
+#include <memory>
+#include <string>
+
+class TransportUnit {
+public:
+    virtual double calculateToll(double distance) const = 0;
+    virtual void displayInfo() const = 0;
+    virtual ~TransportUnit() {}
+};
+
+class Car : public TransportUnit {
+    std::string name;
+public:
+    Car(const std::string& n) : name(n) {}
+    double calculateToll(double distance) const override { return distance * 0.1; }
+    void displayInfo() const override { std::cout << "Car: " << name; }
+};
+
+class Truck : public TransportUnit {
+    std::string name;
+public:
+    Truck(const std::string& n) : name(n) {}
+    double calculateToll(double distance) const override { return distance * 0.3 + 5.0; }
+    void displayInfo() const override { std::cout << "Truck: " << name; }
+};
+
+class Route {
+    double length;
+public:
+    Route(double len) : length(len) {}
+    double getLength() const { return length; }
+};
+
+class AssignedRoute {
+    Route route;
+    std::unique_ptr<TransportUnit> transport;
+    
+public:
+    AssignedRoute(const Route& r, std::unique_ptr<TransportUnit> t) 
+        : route(r), transport(std::move(t)) {}
+    
+    double calculateTotalCost() const {
+        return transport ? transport->calculateToll(route.getLength()) : 0.0;
+    }
+    
+    void print() const {
+        std::cout << "Дистанция: " << route.getLength() << " км, ";
+        if (transport) {
+            transport->displayInfo();
+            std::cout << ", Стоимость: " << calculateTotalCost() << " у.е.\n";
+        }
+    }
+};
+
+int main() {
+    std::cout << "=== ПРОСТАЯ ДЕМОНСТРАЦИЯ ===\n\n";
+    
+    Route route(100.0);
+    
+    AssignedRoute route1(route, std::make_unique<Car>("Toyota"));
+    route1.print();
+    
+    AssignedRoute route2(route, std::make_unique<Truck>("Volvo"));
+    route2.print();
+    
+    std::vector<std::unique_ptr<AssignedRoute>> routes;
+    routes.push_back(std::make_unique<AssignedRoute>(
+        Route(50.0), std::make_unique<Car>("Honda")
+    ));
+    routes.push_back(std::make_unique<AssignedRoute>(
+        Route(200.0), std::make_unique<Truck>("KamAZ")
+    ));
+    routes.push_back(std::make_unique<AssignedRoute>(
+        Route(150.0), std::make_unique<Car>("BMW")
+    ));
+    
+    std::cout << "\n=== ВСЕ МАРШРУТЫ ===\n";
+    double total = 0.0;
+    for (const auto& r : routes) {
+        r->print();
+        total += r->calculateTotalCost();
+    }
+    
+    std::cout << "\nОбщая стоимость: " << total << " у.е.\n";
+    
+    std::cout << "\nПри завершении программы все объекты будут автоматически удалены.\n";
+    
+    return 0;
+}
